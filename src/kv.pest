@@ -1,0 +1,26 @@
+file = { SOI ~ import* ~ keyvalue* ~ EOI }
+
+import = { "#base" ~ string }
+
+section = { l_brace ~ keyvalue* ~ r_brace }
+keyvalue = { key ~ (value | section) }
+
+key = { string }
+value = { string }
+
+l_brace = { "{" }
+r_brace = { "}" }
+
+string = ${ "\"" ~ inner ~ "\"" }
+inner = @{ char* }
+char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+COMMENT = { line_comment | block_comment }
+line_comment = { "//" ~ (!"\n" ~ ANY)* }
+block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
