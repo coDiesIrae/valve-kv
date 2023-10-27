@@ -1,3 +1,5 @@
+use std::{collections::VecDeque, fs, path::Path, string::FromUtf8Error};
+
 use pest::{
     iterators::{Pair, Pairs},
     Parser,
@@ -63,4 +65,44 @@ fn parse_single_kv(input: Pair<Rule>) -> KeyValue {
     }
 
     kv
+}
+
+#[derive(Debug)]
+pub enum ParseFileError {
+    ReadFileError(std::io::Error),
+    ReadUtf8Error(FromUtf8Error),
+    ParseKeyValueError(Box<pest::error::Error<Rule>>),
+}
+
+pub fn parse_file(path: &str) -> Result<Vec<KeyValue>, ParseFileError> {
+    let base_path = Path::new(path).parent().unwrap().to_str().unwrap();
+
+    let mut paths: VecDeque<String> = Default::default();
+    paths.push_back(path.to_string());
+
+    let mut res: Vec<KeyValue> = vec![];
+
+    while let Some(current_path) = paths.pop_front() {
+        let mut file = parse_file_impl(&current_path)?;
+
+        res.append(&mut file.kvs);
+
+        for new_path in file.imports {
+            let full_new_path = format!("{}/{}", base_path, new_path);
+            paths.push_back(full_new_path);
+        }
+    }
+
+    Ok(res)
+}
+
+fn parse_file_impl(path: &str) -> Result<KeyValueFile, ParseFileError> {
+    let file = String::from_utf8(fs::read(path).map_err(ParseFileError::ReadFileError)?)
+        .map_err(ParseFileError::ReadUtf8Error)?;
+
+    parse_input(&file).map_err(ParseFileError::ParseKeyValueError)
+}
+
+pub trait KVDesereliaze {
+    fn from_key_value(input: KeyValue) -> Self;
 }

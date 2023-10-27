@@ -1,23 +1,53 @@
 use crate::kv::{KeyValue, Value};
 
 pub fn serialize_kv(input: KeyValue) -> String {
-    format!(r#""{}"{}"#, input.key, serialize_kv_value(input.value))
+    impl_serialize_kv(input, 0)
 }
 
-fn serialize_kv_value(input: Value) -> String {
-    match input {
-        Value::Value(value) => format!(" \"{}\"", value),
-        Value::Section(section) => {
-            let mut res = "\n{".to_string();
+fn impl_serialize_kv(input: KeyValue, depth: i8) -> String {
+    let mut res = "".to_string();
 
-            for kv in section {
-                res.push_str("\n\t");
-                res.push_str(&serialize_kv(kv));
+    res = pad_tabs(&res, depth);
+    res = format!("{}\"{}\"", res, input.key);
+
+    match input.value {
+        Value::Value(value) => {
+            res = format!("{} \"{}\"", res, value);
+
+            res
+        }
+        Value::Section(sections) => {
+            res.push('\n');
+            res = pad_tabs(&res, depth);
+            res.push('{');
+
+            for section in sections {
+                res = format!("{}\n{}", res, impl_serialize_kv(section, depth + 1),);
             }
 
-            res.push_str("\n}");
+            res.push('\n');
+            res = pad_tabs(&res, depth);
+            res.push('}');
 
             res
         }
     }
+}
+
+fn pad_tabs(input: &str, depth: i8) -> String {
+    let mut res = input.to_string();
+
+    for _ in 0..depth {
+        res.push('\t');
+    }
+
+    res
+}
+
+pub trait KVSerialize {
+    fn to_key_value(&self) -> KeyValue;
+}
+
+pub fn serialize_obj(input: Box<dyn KVSerialize>) -> String {
+    serialize_kv(input.to_key_value())
 }
