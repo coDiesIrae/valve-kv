@@ -7,6 +7,31 @@ use serde::{
 
 use crate::error::{Error, Result};
 
+pub fn to_file<T>(value: &T) -> Result<String>
+where
+    T: Serialize,
+{
+    let mut serializer = Serializer::new();
+
+    value.serialize(&mut serializer)?;
+    serializer.trim();
+    serializer.prettify();
+
+    Ok(serializer.output)
+}
+
+pub fn to_string<T>(value: &T) -> Result<String>
+where
+    T: Serialize,
+{
+    let mut serializer = Serializer::new();
+
+    value.serialize(&mut serializer)?;
+    serializer.prettify();
+
+    Ok(serializer.output)
+}
+
 pub struct Serializer {
     seq_index: usize,
     output: String,
@@ -63,19 +88,6 @@ impl Default for Serializer {
     fn default() -> Self {
         Self::new()
     }
-}
-
-pub fn to_string<T>(value: &T) -> Result<String>
-where
-    T: Serialize,
-{
-    let mut serializer = Serializer::new();
-
-    value.serialize(&mut serializer)?;
-    serializer.trim();
-    serializer.prettify();
-
-    Ok(serializer.output)
 }
 
 impl<'a> ser::Serializer for &'a mut Serializer {
