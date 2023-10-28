@@ -37,7 +37,7 @@ impl Serialize for Value {
             Value::Section(section) => {
                 let mut state = serializer.serialize_map(Some(section.len()))?;
 
-                for kv in section.clone() {
+                for kv in section {
                     state.serialize_entry(&kv.key, &kv.value)?;
                 }
 
