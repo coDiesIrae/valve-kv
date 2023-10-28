@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use valve_kv::deserializer::from_str;
+use valve_kv::deserializer::{from_file, from_str};
 
 #[test]
 fn single_field_de() {
@@ -219,4 +219,27 @@ fn struct_map_de() {
     );
 
     assert_eq!(res, Test { a: map });
+}
+
+#[test]
+fn file_de() {
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct Test {
+        a: String,
+        b: String,
+        c: String,
+        d: String,
+    }
+
+    let res = from_file::<Test>("./tests/test_kvs/base.kv").unwrap();
+
+    assert_eq!(
+        res,
+        Test {
+            a: "hello".to_string(),
+            b: "world".to_string(),
+            c: "foo".to_string(),
+            d: "bar".to_string(),
+        }
+    );
 }

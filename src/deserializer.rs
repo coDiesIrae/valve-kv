@@ -8,8 +8,20 @@ use serde::{
 use crate::{
     error::Error,
     kv::{KeyValue, Value},
-    parser::parse_input,
+    parser::{parse_file, parse_input},
 };
+
+pub fn from_file<'a, T>(path: &'a str) -> Result<T, Error>
+where
+    T: Deserialize<'a>,
+{
+    let parsed = parse_file(path)?;
+
+    let mut deserializer = Deserializer::from_kv(Value::Section(parsed));
+    let t = T::deserialize(&mut deserializer)?;
+
+    Ok(t)
+}
 
 pub fn from_str<'a, T>(input: &'a str) -> Result<T, Error>
 where
