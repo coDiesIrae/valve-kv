@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fs, path::Path, string::FromUtf8Error};
+use std::{collections::VecDeque, fs, path::Path};
 
 use pest::{
     iterators::{Pair, Pairs},
@@ -6,16 +6,12 @@ use pest::{
 };
 use pest_derive::Parser;
 
-use crate::kv::{KeyValue, KeyValueFile, Value};
+use crate::{
+    error::Error,
+    kv::{KeyValue, KeyValueFile, Value},
+};
 
-#[derive(Debug)]
-pub enum ParseFileError {
-    ReadFileError(std::io::Error),
-    ReadUtf8Error(FromUtf8Error),
-    ParseKeyValueError(Box<pest::error::Error<Rule>>),
-}
-
-pub fn parse_file(path: &str) -> Result<Vec<KeyValue>, ParseFileError> {
+pub fn parse_file(path: &str) -> Result<Vec<KeyValue>, Error> {
     let base_path = Path::new(path)
         .parent()
         .and_then(|s| s.to_str())
@@ -40,19 +36,20 @@ pub fn parse_file(path: &str) -> Result<Vec<KeyValue>, ParseFileError> {
     Ok(res)
 }
 
-fn parse_file_impl(path: &str) -> Result<KeyValueFile, ParseFileError> {
-    let file = String::from_utf8(fs::read(path).map_err(ParseFileError::ReadFileError)?)
-        .map_err(ParseFileError::ReadUtf8Error)?;
+fn parse_file_impl(path: &str) -> Result<KeyValueFile, Error> {
+    let file = String::from_utf8(fs::read(path).map_err(Error::ReadFileError)?)
+        .map_err(Error::ReadUtf8Error)?;
 
-    parse_input(&file).map_err(ParseFileError::ParseKeyValueError)
+    parse_input(&file)
 }
 
 #[derive(Parser)]
 #[grammar = "src/kv.pest"]
 pub struct KeyValueParser;
 
-pub fn parse_input(input: &str) -> Result<KeyValueFile, Box<pest::error::Error<Rule>>> {
-    let pairs = KeyValueParser::parse(Rule::file, input)?;
+pub fn parse_input(input: &str) -> Result<KeyValueFile, Error> {
+    let pairs = KeyValueParser::parse(Rule::file, input)
+        .map_err(|e| Error::ParseKeyValueError(Box::new(e)))?;
 
     let mut kvf = KeyValueFile::default();
 
