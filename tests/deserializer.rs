@@ -243,3 +243,37 @@ fn file_de() {
         }
     );
 }
+
+#[test]
+fn enum_de() {
+    #[derive(Debug, Deserialize, PartialEq)]
+    enum Test {
+        A,
+        B,
+        C,
+    }
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct TestStruct {
+        a: Test,
+        b: Test,
+        c: Test,
+    }
+
+    let input = r#"
+    "b" "A"
+    "a" "C"
+    "c" "B"
+    "#;
+
+    let res = from_str::<TestStruct>(input).unwrap();
+
+    assert_eq!(
+        res,
+        TestStruct {
+            a: Test::C,
+            b: Test::A,
+            c: Test::B,
+        }
+    );
+}

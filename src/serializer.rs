@@ -415,7 +415,11 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
     where
         T: Serialize,
     {
-        key.serialize(MapKeySerializer).map(|_| ())
+        self.output += "\"";
+        self.output += key.serialize(MapKeySerializer)?.as_str();
+        self.output += "\"";
+
+        Ok(())
     }
 
     fn serialize_value<T: ?Sized>(&mut self, value: &T) -> Result<()>
