@@ -102,7 +102,3 @@ fn parse_file_impl(path: &str) -> Result<KeyValueFile, ParseFileError> {
 
     parse_input(&file).map_err(ParseFileError::ParseKeyValueError)
 }
-
-pub trait KVDesereliaze {
-    fn from_key_value(input: KeyValue) -> Self;
-}
