@@ -8,6 +8,8 @@ pub enum Error {
     Custom(String),
 }
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 impl ser::Error for Error {
     fn custom<T>(msg: T) -> Self
     where
